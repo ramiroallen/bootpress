@@ -1,0 +1,52 @@
+﻿@page "/multipleExplorer"
+
+<button class="btn btn-primary" @onclick="AddExplorer">Add Explorer</button><br/><br />
+<table class="table">
+    <tbody>
+        @for (; iteration < _displayComponents.Count(); iteration++)
+        {
+        <tr>
+            <td> @if(_displayComponents[iteration]){
+                <ExplorerBox Position="iteration" OnClicked="@RemoveExplorer"/>
+                }
+            </td>
+            <td>
+                @if (CanAdd())
+                {
+                <ExplorerBox Position="iteration" OnClicked="@RemoveExplorer" /> 
+                }
+            </td>
+            <td>
+                @if (CanAdd())
+                {
+                    <ExplorerBox Position="iteration" OnClicked="@RemoveExplorer" />
+                }
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+@code {
+    readonly List<bool> _displayComponents = new List<bool>();
+    Task AddExplorer()
+    {
+        _displayComponents.Add(true);
+        iteration = 0;
+        return Task.FromResult(0);
+    }
+    bool CanAdd()
+    {
+        iteration++;
+        return iteration < _displayComponents.Count() && _displayComponents[iteration];
+    }
+    int iteration = 0;
+    void RemoveExplorer(int position)
+    {
+        _displayComponents[position] = false;
+        this.iteration = 0;
+        InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+}

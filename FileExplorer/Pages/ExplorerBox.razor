@@ -1,0 +1,20 @@
+﻿<table>
+    <tr>
+        <td>
+            <Explorer/>
+        </td>
+        <td>
+            <button class="btn btn-danger" @onclick="()=>InvokeParentMethod(Position)">-</button>
+        </td>
+    </tr>
+</table>
+
+@code {
+    [Parameter] public Action<int> OnClicked { get; set; }
+    [Parameter] public int Position { get; set; }
+
+    private void InvokeParentMethod(int i)
+    {
+        OnClicked.Invoke(Position);
+    }
+}

@@ -1,0 +1,81 @@
+﻿@page "/"
+
+@using FileExplorer.Services
+@using FileExplorer.DTOs
+@using MW.Blazor;
+@inject IDirectoryService directoryService
+
+
+<input class="border-4 w-1/3 rounded m-6 p-6 h-8 border-blue-600 explorer" @bind-value="directory" @onkeyup="@Enter"
+       placeholder="Enter folder to watch and press enter or click 'Display'" />
+<button class="btn btn-primary" @onclick="GetNodes">Display</button>
+<div id="error-ui" class="validation-message">
+    @errorDescription
+</div>
+
+@if (root != null)
+{
+    <Tree Nodes="root.Children" ChildSelector="node => node.Children" HasChildNodes="node => node.NodeType == NodeType.Directory" OnNodeExpand="OnNodeExpand">
+        <TitleTemplate>@context.Name</TitleTemplate>
+    </Tree>
+}
+
+@code {
+    private Node root;
+    private string directory;
+    private string errorDescription;
+
+    async Task OnNodeExpand(Node item)
+    {
+        if (item.Children == null)
+        {
+            item.Children = directoryService.GetNodes(item.FullPath, 0)?.Children;
+        }
+    }
+
+    private void GetNodes()
+    {
+        try
+        {
+            root = directoryService.GetNodes(directory, 1);
+        }
+        catch (Exception ex)
+        {
+            errorDescription = ex.Message;
+            return;
+        }
+        errorDescription = string.Empty;
+
+        ExpandedNodes.Add(root.Children?.Skip(1)?.FirstOrDefault());
+        ExpandedNodes.Add(root.Children?.Skip(1).Take(1).FirstOrDefault()?.Children?.Skip(1)?.FirstOrDefault());
+
+        directoryService.Watch(directory, async (sender, e) =>
+        {
+            await Refresh();
+        }, async (sender, e) =>
+        {
+            await Refresh();
+        }, (sender, e)=>
+        {
+            errorDescription = e.GetException().Message;
+        });
+    }
+    async Task Refresh()
+    {
+        root = directoryService.GetNodes(root.FullPath, 1);
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public void Enter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            GetNodes();
+        }
+    }
+
+    IList<Node> ExpandedNodes = new List<Node>();
+}
